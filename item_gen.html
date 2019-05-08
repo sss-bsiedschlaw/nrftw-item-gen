@@ -1,0 +1,1330 @@
+<html>
+	<head>
+		<style>
+			span.inherent { font-weight: bold; }
+			select { width: 130px; }
+		</style>
+		<script>
+			var GUN_TYPES = {
+				"1": "Pistol",
+				"2": "Combat Rifle",
+				"3": "Shotgun",
+				"4": "SMG",
+				"5": "Sniper Rifle",
+				"6": "Rocket Launcher"
+			};
+			
+			var RED_TEXT_KW_DESCCRIPTIONS = {
+				"Ricochet": "On a 1-9, roll 1d6: [1-3: hit a random ally; 4-6: hit initial target (even if you initially missed)]",
+				"AmmoRegen": "On a hit, regain 1 ammo",
+				"Vampire": "On hit, heal by half of target’s HP damage rounded up",
+				"HitRange": "Hits everything at close range and far takes min damage",
+				"ClipDamage": "+damage = remaining ammo in clip, Out of ammo",
+				"Knockback": "Knocks the target out of its current range",
+				"CloserIsBetter": "Attack bonus is based on range: [Hand: +2attack; Close: +1attack; Far: -1attack]",
+				"StackDamage(x)": "Damage bonus starts at +__param__ and is incremented by 1 each time the same target is hit",
+				"NoAmmo": "Does not use ammo: ammo = 1"
+			};
+			
+			var KEYWORD_DESCRIPTIONS = {
+			};
+			
+			var MANUFACTURER_DESCRIPTIONS = {
+				"Bandit": { "desc": ["+2 ammo"], "isAutoElemental": false },
+				"Dahl": { "desc": ["+spray"], "isAutoElemental": false },
+				"Hyperion": { "desc": ["SM: {On 12+: you may immediately <b>Exchange Fire</b> again}"], "isAutoElemental": false },
+				"Jakobs": { "desc": ["+2 damage"], "isAutoElemental": false },
+				"Maliwan": { "desc": [], "isAutoElemental": true },
+				"Tediore": { "desc": ["SM: {+3damage, huck it, On 7-9: [you may have your gun go somewhere you didn’t intend]}"], "isAutoElemental": false },
+				"TORGUE": { "desc": ["+messy", "+loud"], "isAutoElemental": true },
+				"Vladov": { "desc": ["+SM: High Fire Rate"], "isAutoElemental": false },
+			};
+			
+			var GUN_TYPE_DESCRIPTIONS = {
+				"Pistol": {
+					"d4": 0,
+					"d6": 1,
+					"d8": 0,
+					"d10": 0,
+					"d12": 0,
+					"damage": "1d6",
+					"ammo": 6,
+					"desc": ["<span class='inherent'>+hand</span>", "<span class='inherent'>+close</span>", "<span class='inherent'>+far</span>"],
+					"redTexts": [
+						{
+							Text: "A Beast of Many Forms",
+							Effects: [],
+							SpecialMove: ["Roll 1d8: [1-2: No element; 3-4: +burn; 5-6: +corrode; 7-8: +shock]"],
+							Manufacturer: null,
+							Flavor: "Shooting causes a large chimera to form from light particles. The roll determines which head (or tail) strikes."
+						},
+						{
+							Text: "Fools! They Called Me Maaaad!",
+							Effect: [],
+							SpecialMove: ["-2attack", "+1damage", "+explosive", "Ricochet"],
+							Manufacturer: null,
+							Flavor: "Bullets move in horizontal zig-zag pattern."
+						},
+						{
+							Text: "Sick Stick",
+							Effect: [],
+							SpecialMove: ["+corrode", "+area"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "It's a Helluva Thing",
+							Effect: [],
+							SpecialMove: ["x2 damage"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Long and Strong",
+							Effect: [],
+							SpecialMove: ["+2attack", "+2damage"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "May God have mercy upon my enemies… I won’t.",
+							Effect: [],
+							SpecialMove: ["+4damage"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Unending Firepower",
+							Effect: ["AmmoRegen"],
+							SpecialMove: [],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Your Life Belongs to Me",
+							Effect: [],
+							SpecialMove: ["Vampire"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Dodge This",
+							Effect: [],
+							SpecialMove: ["+5attack", "+explosive", "+corrosive"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Havin' a Tea Partay, Drinkin' Mah Teeea!",
+							Effect: [],
+							SpecialMove: ["+area", "+corrosive"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "What’s This Do?",
+							Effect: [],
+							SpecialMove: ["+2damage", "Roll 1d6: [1: the GM takes a move that does not directly hurt the player]"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "It’s Closer than You Think (No It Isn’t)",
+							Effect: ["NoAmmo"],
+							SpecialMove: [],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Shoulda Stopped at One",
+							Effect: ["+1 Second Wind attempt"],
+							SpecialMove: [],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Golden Gun",
+							Effect: ["+valuable", "+hi-tech"],
+							SpecialMove: ["On 12+: [+10damage]"],
+							Manufacturer: null,
+							Flavor: "Gold plated"
+						}
+					],
+					"manufacturerMaxDie": 8,
+					"manufacturerTypes": {
+						"1": "Bandit",
+						"2": "Dahl",
+						"3": "Hyperion",
+						"4": "Jakobs",
+						"5": "Maliwan",
+						"6": "Tediore",
+						"7": "TORGUE",
+						"8": "Vladov"
+					}
+				},
+				"Combat Rifle": {
+					"d4": 0,
+					"d6": 0,
+					"d8": 1,
+					"d10": 0,
+					"d12": 0,
+					"damage": "1d8",
+					"ammo": 12,
+					"desc": ["<span class='inherent'>+close</span>", "<span class='inherent'>+far</span>", "<span class='inherent'>+loud</span>", "<span class='inherent'>+spray</span>"],
+					"redTexts": [
+						{
+							Text: "A Watchful Eye",
+							Effects: [],
+							SpecialMove: ["At far: [+2attack]"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Hold Your Ground... Forever",
+							Effects: ["AmmoRegen"],
+							SpecialMove: [],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Ogre SMASH!!!",
+							Effects: [],
+							SpecialMove: ["+3damage", "+explosive"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "The Destructor Has Come",
+							Effects: [],
+							SpecialMove: ["Out of Ammo", "+6 damage"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "TORGUE! Bastard Guns for Bastard People!",
+							Effects: [],
+							SpecialMove: ["+2damage", "-2attack"],
+							Manufacturer: "TORGUE",
+							Flavor: null
+						},
+						{
+							Text: "War is in Your Blood",
+							Effects: ["+2ammo"],
+							SpecialMove: ["-1attack", "+1damage"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Dragon Fire!",
+							Effects: [],
+							SpecialMove: ["+burn", "+1damage", "+3ammo"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Poison in Your Veins",
+							Effects: [],
+							SpecialMove: ["+corrode", "+2ammo"],
+							Manufacturer: null,
+							Flavor: "Plasma slithers like a snake to target."
+						},
+						{
+							Text: "RAR! BRAR BRAR!",
+							Effects: [],
+							SpecialMove: ["Out of Ammo", "+6 damage", "+4ammo"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Useful for Kicking Hector's Bitch Ass",
+							Effects: ["+far"],
+							SpecialMove: ["+6attack at far"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "It’s a Madhouse! A MADHOUSE!!!",
+							Effects: [],
+							SpecialMove: ["+6attack"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "You’re Rubber. I’m Glue.",
+							Effects: [],
+							SpecialMove: ["Vampire"],
+							Manufacturer: null,
+							Flavor: null
+						}
+					],
+					"manufacturerMaxDie": 10,
+					"manufacturerTypes": {
+						"1": "Bandit",
+						"2": "Bandit",
+						"3": "Dahl",
+						"4": "Dahl",
+						"5": "Jakobs",
+						"6": "Jakobs",
+						"7": "TORGUE",
+						"8": "TORGUE",
+						"9": "Vladov",
+						"10": "Vladov"
+					}
+				},
+				"Shotgun": {
+					"d4": 2,
+					"d6": 0,
+					"d8": 0,
+					"d10": 0,
+					"d12": 0,
+					"damage": "2d4",
+					"ammo": 4,
+					"desc": ["<span class='inherent'>+close</span>", "<span class='inherent'>+messy</span>", "<span class='inherent'>+loud</span>"],
+					"redTexts": [
+						{
+							Text: "Ahhh... Fresh Meat!",
+							Effects: [],
+							SpecialMove: ["+2damage"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Beyond Groovy",
+							Effects: [],
+							SpecialMove: ["+explosive", "ClipDamage"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Bring Out Your Dead",
+							Effects: [],
+							SpecialMove: ["+corrosive", "+2damage"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Cross Their Heart, Hope They Die",
+							Effects: [],
+							SpecialMove: ["+explosive", "+2damage"],
+							Manufacturer: null,
+							Flavor: "Spread is in the shape of a cross."
+						},
+						{
+							Text: "Drop the Hammer!",
+							Effects: [],
+							SpecialMove: ["+explosive", "+3damage"],
+							Manufacturer: null,
+							Flavor: "Spread is in the shape of a hammer."
+						},
+						{
+							Text: "Five Heads of Death",
+							Effects: [],
+							SpecialMove: ["+5damage", "Uses an extra ammo"],
+							Manufacturer: null,
+							Flavor: "Spread has five distinct groupings."
+						},
+						{
+							Text: "Have a Nice Day!",
+							Effects: [],
+							SpecialMove: ["+burn", "+2damage"],
+							Manufacturer: null,
+							Flavor: "Spread is in the shape of a smiley face."
+						},
+						{
+							Text: "I Can Do This All Day...",
+							Effects: ["AmmoRegen"],
+							SpecialMove: [],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "It's a Painful Thing",
+							Effects: ["+far"],
+							SpecialMove: ["+1attack", "+corrosive"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "One Bad Dog!",
+							Effects: ["+5ammo"],
+							SpecialMove: [],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Ride the Wave, Dude!",
+							Effects: [],
+							SpecialMove: ["+area"],
+							Manufacturer: null,
+							Flavor: "Pellets are blue. Spread is a rectangular plane that oscillates like a wave."
+						},
+						{
+							Text: "Sniper Rifles are for Chumps",
+							Effects: [],
+							SpecialMove: ["+3attack", "+2damage"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "The Legend Lives!",
+							Effects: [],
+							SpecialMove: ["+2damage", "Knockback", "CloserIsBetter"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "I Like Being a Gun",
+							Effects: [],
+							SpecialMove: [],
+							Manufacturer: null,
+							Flavor: "Talking gun (optimistic)."
+						},
+						{
+							Text: "I Don’t Want to Set the World on Fire",
+							Effects: [],
+							SpecialMove: ["+burn"],
+							Manufacturer: null,
+							Flavor: "Spread is in the shape of a heart."
+						},
+					],
+					"manufacturerMaxDie": 10,
+					"manufacturerTypes": {
+						"1": "Bandit",
+						"2": "Bandit",
+						"3": "Hyperion",
+						"4": "Hyperion",
+						"5": "Jakobs",
+						"6": "Jakobs",
+						"7": "Tediore",
+						"8": "Tediore",
+						"9": "TORGUE",
+						"10": "TORGUE"
+					}
+				},
+				"SMG": {
+					"d4": 0,
+					"d6": 1,
+					"d8": 0,
+					"d10": 0,
+					"d12": 0,
+					"damage": "1d6",
+					"ammo": 10,
+					"desc": ["<span class='inherent'>+close</span>", "<span class='inherent'>+spray</span>"],
+					"redTexts": [
+						{
+							Text: "A Clip to the Skull",
+							Effects: ["+far"],
+							SpecialMove: ["Only at far: [+2attack, +4damage, Out of Ammo]"],
+							Manufacturer: null,
+							Flavor: "Unload the entire clip into their skull."
+						},
+						{
+							Text: "We Don't Need No Water...",
+							Effects: [],
+							SpecialMove: ["+burn", "StackDamage(x)|2"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Ammo is no Longer an Issue",
+							Effects: ["AmmoRegen"],
+							SpecialMove: [],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Hallelujah!",
+							Effects: ["AmmoRegen"],
+							SpecialMove: [],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Big Tony Says 'Hi'",
+							Effects: ["+2ammo"],
+							SpecialMove: [],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Bring the HEAT!",
+							Effects: [],
+							SpecialMove: ["+burn", "+area"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Don't Drop It... Might Lose a Toe.",
+							Effects: ["On <b>Go in Swinging</b> hit: [+1d6damage, +burn]"],
+							SpecialMove: [],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Double Whammy",
+							Effects: [],
+							SpecialMove: ["x2damage"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Feel the Sting",
+							Effects: [],
+							SpecialMove: ["+corrosive", "+1damage"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Sometimes, I Forget To Reload",
+							Effects: ["NoAmmo"],
+							SpecialMove: [],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Never Stop Shooting!",
+							Effects: [],
+							SpecialMove: ["+1attack", "+2ammo"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Omnia Vincit Amor",
+							Effects: [],
+							SpecialMove: ["On 12+: [x2damage]"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Pain Heals",
+							Effects: [],
+							SpecialMove: ["Vampire"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Slice Slice",
+							Effects: ["On <b>Go in Swinging</b> hit: [+3damage, heal by half of target’s HP damage rounded up]"],
+							SpecialMove: [],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Vengeance is Mine",
+							Effects: [],
+							SpecialMove: ["Roll 1d6: [4-6: bypass target’s shields]"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Your Move, Punk",
+							Effects: [],
+							SpecialMove: ["+3damage", "expend an extra ammo"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Bling!",
+							Effects: ["+$5000buy", "+$2500sell"],
+							SpecialMove: [],
+							Manufacturer: null,
+							Flavor: "Gold plated and diamond crusted."
+						},
+						{
+							Text: "Say Hello to My Little Friend",
+							Effects: ["+2ammo"],
+							SpecialMove: ["+2damage", "-1attack", "+spray"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "You Can Run, but You Can’t Hide",
+							Effects: [],
+							SpecialMove: ["Ricochet"],
+							Manufacturer: null,
+							Flavor: "Bullets ricochet."
+						},
+						{
+							Text: "I Spy With My Little Eye...",
+							Effects: ["+far"],
+							SpecialMove: ["At far: [+1attack]"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Tear It Up!",
+							Effects: [],
+							SpecialMove: ["-1attack", "+3damage"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "The Lead Wind Blows",
+							Effects: [],
+							SpecialMove: ["+4damage", "uses an extra ammo"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "The Ultimate Close Quarters Feline",
+							Effects: ["+2ammo"],
+							SpecialMove: ["At close/hand: [+2attack]"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Flee the Wave!",
+							Effects: [],
+							SpecialMove: ["-1attack", "Roll 1d6: [1-3: +shock; 4-6: +corrosive]", "Ricochet"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Phooon!",
+							Effects: [],
+							SpecialMove: ["+1damage", "+Richochet", "expend an extra ammo"],
+							Manufacturer: null,
+							Flavor: "Bullets form a trident."
+						},
+						{
+							Text: "In Spain, Stays Mainly on the Plain",
+							Effects: [],
+							SpecialMove: ["+2attack"],
+							Manufacturer: null,
+							Flavor: "Talking gun (obnoxious)"
+						}
+					],
+					"manufacturerMaxDie": 10,
+					"manufacturerTypes": {
+						"1": "Bandit",
+						"2": "Bandit",
+						"3": "Dahl",
+						"4": "Dahl",
+						"5": "Hyperion",
+						"6": "Hyperion",
+						"7": "Maliwan",
+						"8": "Maliwan",
+						"9": "Tediore",
+						"10": "Tediore"
+					}
+				},
+				"Sniper Rifle": {
+					"d4": 0,
+					"d6": 0,
+					"d8": 0,
+					"d10": 1,
+					"d12": 0,
+					"damage": "1d10",
+					"ammo": 4,
+					"desc": ["<span class='inherent'>+far</span>", "<span class='inherent'>+hi-tech</span>"],
+					"redTexts": [
+						{
+							Text: "A Hunter Lives Among the Stars...",
+							Effects: [],
+							SpecialMove: ["+shock", "+Richochet", "+1damage"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "BAM BAM BAM BAM BAM!",
+							Effects: [],
+							SpecialMove: ["At far: [+1damage]"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Careful... You Might Shoot Someone's Eye Out.",
+							Effects: ["-far", "+6ammo"],
+							SpecialMove: ["+2damage"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "I LIKE IT!",
+							Effects: [],
+							SpecialMove: ["+explosive", "+2damage"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Tickle Their Brain",
+							Effects: [],
+							SpecialMove: ["+2attack", "+1damage"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Pele Demands a Sacrifice!",
+							Effects: [],
+							SpecialMove: ["+explosive", "+burn"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "The Cutting Edge",
+							Effects: ["+2ammo", "+hi-tech"],
+							SpecialMove: ["+3attack"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Thwack!",
+							Effects: [],
+							SpecialMove: ["On 12+: [+1damage]"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Why Don't You Go Shoot Yourself an Elephant?",
+							Effects: ["+hand", "+close"],
+							SpecialMove: ["At close/hand: [+3damage]"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Good Touch",
+							Effects: [],
+							SpecialMove: ["+1damage", "+explosive", "Vampire"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "That's My Girl...",
+							Effects: [],
+							SpecialMove: ["+1damage", "On 12+: [+5damage]", "At far: [+3attack]"],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "Where’d it go?!?",
+							Effects: [],
+							SpecialMove: ["+10attack", "Roll 1d10: [1-3: the shot misses the intended target and the GM makes a move."],
+							Manufacturer: null,
+							Flavor: "If the d10 roll is 1-3, then the bullet opens a small wormhole and disappears."
+						},
+						{
+							Text: "A Rose By Any Other Name",
+							Effects: [],
+							SpecialMove: [],
+							Manufacturer: null,
+							Flavor: "Talking gun (mean)"
+						},
+						{
+							Text: "Yeah, Booze’ll Do That to Ya...",
+							Effects: [],
+							SpecialMove: ["-4attack", "+6damage"],
+							Manufacturer: null,
+							Flavor: null
+						}
+					],
+					"manufacturerMaxDie": 10,
+					"manufacturerTypes": {
+						"1": "Dahl",
+						"2": "Dahl",
+						"3": "Hyperion",
+						"4": "Hyperion",
+						"5": "Jakobs",
+						"6": "Jakobs",
+						"7": "Maliwan",
+						"8": "Maliwan",
+						"9": "Vladov",
+						"10": "Vladov"
+					}
+				},
+				"Rocket Launcher": {
+					"d4": 0,
+					"d6": 0,
+					"d8": 0,
+					"d10": 0,
+					"d12": 1,
+					"damage": "1d12",
+					"ammo": 2,
+					"desc": [
+						"<span class='inherent'>+close</span>", "<span class='inherent'>+far</span>", "<span class='inherent'>+area</span>", 
+						"<span class='inherent'>+hi-tech</span>", "<span class='inherent'>+loud</span>"],
+					"redTexts": [
+						{
+							Text: "For the Horde!",
+							Effects: [],
+							SpecialMove: ["-2attack", "4xdamage", "Ricochet"],
+							Manufacturer: null,
+							Flavor: "Fires a rocket that shoots out multiple smaller rockets."
+						},
+						{
+							Text: "Death Rains from Above",
+							Effects: [],
+							SpecialMove: ["2xdamage", "HitRange"],
+							Manufacturer: null,
+							Flavor: "Fires a rocket above the target and shoots multiple rockets straight down."
+						},
+						{
+							Text: "Gonna Cook Someone Today",
+							Effects: [],
+							SpecialMove: ["3xdamage", "HitRange"],
+							Manufacturer: null,
+							Flavor: "Creates a mushroom cloud."
+						},
+						{
+							Text: "It rises!",
+							Effects: [],
+							SpecialMove: ["+burn"],
+							Manufacturer: null,
+							Flavor: "Missiles arc like a grenade. Creates a 100ft tall pillar of fire."
+						},
+						{
+							Text: "The Unstoppable Force",
+							Effects: [],
+							SpecialMove: ["Out of ammo"],
+							Manufacturer: null,
+							Flavor: "The 'area' is a line between the launcher and its intended target as the rocket explodes multiple times along its path."
+						},
+						{
+							Text: "What Kind of Rakk is That?!?",
+							Effects: [],
+							SpecialMove: ["+burn", "+12attack", "Out of ammo"],
+							Manufacturer: null,
+							Flavor: "Rocket is slow moving for a few yards before exploding into light particles. Light particles form a dragon that seeks its target and rains down fire."
+						},
+						{
+							Text: "Toasty!",
+							Effects: ["+2ammo"],
+							SpecialMove: [],
+							Manufacturer: null,
+							Flavor: null
+						},
+						{
+							Text: "BEES?!?!",
+							Effects: [],
+							SpecialMove: ["+5attack", "-explosive"],
+							Manufacturer: null,
+							Flavor: "Instead of a large explosion, the rocket releases thousands of short-lived bees that attack everyone in the 'area'."
+						}
+					],
+					"manufacturerMaxDie": 10,
+					"manufacturerTypes": {
+						"1": "Bandit",
+						"2": "Bandit",
+						"3": "Maliwan",
+						"4": "Maliwan",
+						"5": "Tediore",
+						"6": "Tediore",
+						"7": "TORGUE",
+						"8": "TORGUE",
+						"9": "Vladov",
+						"10": "Vladov"
+					}
+				},
+			};
+			
+			var ELEMENT_TYPES = {
+				"1": "burn",
+				"2": "burn",
+				"3": "corrode",
+				"4": "corrode",
+				"5": "shock",
+				"6": "shock",
+				"7": "slag",
+				"8": "slag",
+				"9": "explosive",
+				"10": "explosive"
+			};
+			
+			var ELEMENT_DESCRIPTIONS = {
+				"burn": { "desc": ["+burn"] },
+				"corrode": { "desc": ["+corrode"] },
+				"shock": { "desc": ["+shock"] },
+				"slag": { "desc": ["+slag"] },
+				"explosive": { "desc": ["+explosive"] }
+			};
+			
+			var QUALITY_TYPES = {
+				"1": "Common",
+				"2": "Common",
+				"3": "Common",
+				"4": "Common",
+				"5": "Common",
+				"6": "Uncommon",
+				"7": "Uncommon",
+				"8": "Uncommon",
+				"9": "Rare",
+				"10": "Legendary",
+				"11": "Unique",
+				"12": "E-Tech"
+			};
+			
+			var QUALITY_DESCRIPTIONS = {
+				"Common": { "color": "White", "redTextChance": 0, "buyValue": 100, "sellValue": 10, "desc": [] },
+				"Uncommon": { "color": "Green", "redTextChance": 0, "buyValue": 200, "sellValue": 20, "desc": [] },
+				"Rare": { "color": "Blue", "redTextChance": .1, "buyValue": 1000, "sellValue": 100, "desc": ["<span class='inherent'>+valuable</span>"] },
+				"Legendary": { "color": "Purple", "redTextChance": .1, "buyValue": 2000, "sellValue": 400, "desc": ["<span class='inherent'>+valuable</span>"] },
+				"Unique": { "color": "Orange", "redTextChance": 1, "buyValue": 5000, "sellValue": 1000, "desc": ["<span class='inherent'>+valuable</span>"] },
+				"E-Tech": { "color": "Pearlescent", "redTextChance": .1, "buyValue": 5000, "sellValue": 5000, "desc": ["<span class='inherent'>+valuable</span>", "<span class='inherent'>+hi-tech</span>"] },
+			};
+			
+			var selection = {
+				GunType: null,
+				Quality: null,
+				Manufacturer: null,
+				IsElemental: false,
+				IsRedText: false,
+				RedText: null,
+				Element: null,
+				Description: [],
+				Flavor: [],
+				GetBuyValue: function() {
+					return (this.Quality ? QUALITY_DESCRIPTIONS[this.Quality].buyValue : 0) + 
+						(this.IsRedText == "Yes" ? 1000 : 0) +
+						// Explosive Maliwan items are vintage collector items.
+						(this.Manufacturer == "Maliwan" && this.Element == "explosive" ? 10000 : 0);
+				},
+				GetSellValue: function() {
+					return (this.Quality ? QUALITY_DESCRIPTIONS[this.Quality].sellValue : 0) + 
+						(this.IsRedText == "Yes" ? 200 : 0) +
+						// Explosive Maliwan items are vintage collector items.
+						(this.Manufacturer == "Maliwan" && this.Element == "explosive" ? 4000 : 0);
+				}
+			};
+		
+			function generate() {
+				document.getElementById("divDescription").innerHTML = "";
+				
+				if (!selection) {
+					return;
+				}
+				
+				let desc = "";
+				
+				// Red text
+				if (selection.RedText) {
+					desc += "<span style='color: #f00; font-weight:bold;'>" + selection.RedText + "</span><br><br>";
+				}
+				
+				// Damage
+				desc += "<span class='inherent'>Damage: " + (GUN_TYPE_DESCRIPTIONS[selection.GunType].damage || "") + "</span>; ";
+				
+				// Ammo
+				desc += "<span class='inherent'>Ammo: " + (GUN_TYPE_DESCRIPTIONS[selection.GunType].ammo || "") + "</span>; ";
+				
+				if (selection.Description) {
+					desc += selection.Description.join("; ");
+				}
+				
+				// Add the buy/sell values.
+				desc += "; Buy: $" + selection.GetBuyValue().toString();
+				desc += "; Sell: $" + selection.GetSellValue().toString();
+				
+				// Add flavor text.
+				if (selection.Flavor) {
+					desc += "<br><br><div style='font-style:italic'>" + selection.Flavor.join("<br>") + "</div>";
+				}
+				
+				document.getElementById("divDescription").innerHTML = desc;
+			}
+			
+			function autoRoll() {
+				reset();
+				
+				// Gun Type
+				if (!document.getElementById("ddManualGunType").value) {
+					let validOptions = [...document.querySelectorAll('#ddManualGunType option')]
+						.filter(x => !x.disabled && !!x.value)
+						.map(x => x.value);
+					
+					do {
+						document.getElementById("inputGunType").value = Math.ceil(Math.random() * 6);
+					}
+					while (!validOptions.some(x => x == document.getElementById("inputGunType").value));
+					document.getElementById("inputGunType").onchange();
+				}
+				
+				// Is Red Text
+				let isRedText = 0;
+				if (!document.getElementById("ddManualIsRedText").value) {
+					let rtChance = (QUALITY_DESCRIPTIONS[selection.Quality] || {})["redTextChance"] || 0;
+					isRedText = rtChance > 0 && Math.random() <= rtChance ? 1 : 0;
+					document.getElementById("inputIsRedText").value = isRedText;
+					document.getElementById("inputIsRedText").onchange();
+				}
+				else {
+					isRedText = document.getElementById("ddManualIsRedText").value == "1";
+				}
+				
+				// Quality
+				if (!document.getElementById("ddManualQuality").value) {
+					let minQuality = isRedText ? 9 : 1;
+					let qualityScore = 0;
+					while (qualityScore < minQuality) {
+						qualityScore = Math.ceil(Math.random() * 12);
+					}
+					document.getElementById("inputQuality").value = qualityScore;
+					document.getElementById("inputQuality").onchange();
+				}
+				
+				// Manufacturer
+				if (!document.getElementById("ddManualManufacturer").value) {
+					let manufacturerDie = GUN_TYPE_DESCRIPTIONS[selection.GunType].manufacturerMaxDie;
+					document.getElementById("inputManufacturer").value = Math.ceil(Math.random() * manufacturerDie);
+					document.getElementById("inputManufacturer").onchange();
+				}
+				else {
+					let manualManufacturerVal = document.getElementById("ddManualManufacturer").value;
+					let manufacturers = GUN_TYPE_DESCRIPTIONS[selection.GunType].manufacturerTypes;
+					let manufacturerVals = Object.keys(manufacturers).map(key => manufacturers[key] == manualManufacturerVal ? key : null).filter(x => x);
+					document.getElementById("inputManufacturer").value = manufacturerVals[Math.ceil(Math.random() * manufacturerVals.length) - 1];
+					document.getElementById("inputManufacturer").onchange();
+				}
+				
+				// Is Elemental
+				if (!document.getElementById("ddManualIsElemental").value && selection.GunType) {
+					document.getElementById("inputIsElemental").value = getSelectionAutoElemental() ? 1 : (
+						Math.ceil(Math.random() * 8) == 1 ? 1 : 0);
+					document.getElementById("inputIsElemental").onchange();
+				}
+				
+				// Element (TORGUE is only explosive)
+				if (!document.getElementById("ddManualElement").value) {
+					let rndElement = selection.Manufacturer == "TORGUE" ? 10 : Math.ceil(Math.random() * 10);
+					document.getElementById("inputElement").value = rndElement;
+					document.getElementById("inputElement").onchange();
+				}
+				
+				// Add a random red text for the given gun type.
+				let redTexts = isRedText && selection.GunType && GUN_TYPE_DESCRIPTIONS[selection.GunType].redTexts ?
+					GUN_TYPE_DESCRIPTIONS[selection.GunType].redTexts
+						.filter(x => !x.Manufacturer || x.Manufacturer == selection.Manufacturer) : 
+					[];
+					
+				if (redTexts != null && redTexts.length > 0) {
+					let iRedText = Math.floor(Math.random() * redTexts.length);
+					iRedText = 1;
+					
+					// Add the red text name.
+					selection.RedText = redTexts[iRedText].Text;
+					
+					// Add the effects.
+					if (redTexts[iRedText].Effects && redTexts[iRedText].Effects.length) {
+						selection.Description = selection.Description.concat(
+							redTexts[iRedText].Effects
+								.map(x => {
+									let [rtKeyword, rtParam] = x.split("|");
+									let rtDesc = (RED_TEXT_KW_DESCCRIPTIONS[rtKeyword] || x).replace("__param__", rtParam || "");
+									return "<span style='color:#f00;'>" + rtDesc + "</span>";
+								})
+						);
+					}
+					
+					// Add the special move.
+					if (redTexts[iRedText].SpecialMove && redTexts[iRedText].SpecialMove.length) {
+						let txtSpecialMove = "<span style='color:#f00;'>SM: { " + 
+							redTexts[iRedText].SpecialMove
+								.map(x => {
+									let [rtKeyword, rtParam] = x.split("|");
+									let rtDesc = (RED_TEXT_KW_DESCCRIPTIONS[rtKeyword] || x).replace("__param__", rtParam || "");
+									return "<span style='color:#f00;'>" + rtDesc + "</span>";
+								})
+								.join(", ") + 
+							" }</span>";
+						selection.Description.push(txtSpecialMove);
+					}
+					
+					// Add the flavor.
+					if (redTexts[iRedText].Flavor) {
+						selection.Flavor.push(redTexts[iRedText].Flavor);
+					}
+				}
+				
+				// Generate the gun display.
+				generate();
+			}
+			
+			function reset() {
+				selection.GunType = null;
+				selection.Quality = null;
+				selection.Manufacturer = null;
+				selection.IsElemental = false;
+				selection.RedText = null;
+				selection.IsRedText = false;
+				selection.Element = null;
+				selection.Description = [];
+				selection.Flavor = [];
+				document.getElementById("divDescription").innerHTML = "";
+				
+				[].forEach.call(document.querySelectorAll('input'), function(elm){
+					elm.value = null;
+					elm.onchange();
+				});
+				
+				updateManualDropdowns()
+			}
+			
+			function getSelectedManufacturerArray() {
+				return selection.GunType ? GUN_TYPE_DESCRIPTIONS[selection.GunType].manufacturerTypes : null;
+			}
+			
+			function getSelectionAutoElemental() {
+				return MANUFACTURER_DESCRIPTIONS && MANUFACTURER_DESCRIPTIONS[selection.Manufacturer] && 
+					MANUFACTURER_DESCRIPTIONS[selection.Manufacturer].isAutoElemental;
+			}
+			
+			function inputChange(idLabel, idInput, arrTypes, arrDesc, keySelection) {
+				let key = document.getElementById(idInput).value;
+				let val = (arrTypes && Object.keys(arrTypes).length) ? arrTypes[key] : null;
+				
+				document.getElementById(idLabel).innerHTML = val || "";
+				selection[keySelection] = val;
+				
+				if (arrDesc && arrDesc[val] && arrDesc[val].desc) {
+					selection.Description = (selection.Description || []).concat(arrDesc[val].desc);
+				}
+			}
+			
+			function guessRandom(idInput, idLabel, maxNumber, isAutoCorrect, keySelection) {
+				if (isAutoCorrect) {
+					document.getElementById(idLabel).innerHTML = "Yes";
+					return;
+				}
+				
+				if (isNaN(document.getElementById(idInput).value)) {
+					document.getElementById(idLabel).innerHTML = "No";
+					document.getElementById(idInput).innerHTML = "";
+					return;
+				}
+				
+				let guess = parseInt(document.getElementById(idInput).value);
+				let rnd = Math.ceil(Math.random() * maxNumber);
+				let val = rnd == guess ? "Yes" : "No";
+				
+				document.getElementById(idLabel).innerHTML = val;
+				selection[keySelection] = val;
+			}
+			
+			function updateManualDropdowns() {
+				let gunTypeVal = document.getElementById("ddManualGunType").value;
+				let gunType = GUN_TYPES[gunTypeVal] || "";
+				let gunTypeDesc = GUN_TYPE_DESCRIPTIONS[gunType] || null;
+				let gunTypeManufacturers = gunTypeDesc ? Object.values(gunTypeDesc.manufacturerTypes) || [] : [];
+				
+				let manufacturerVal = document.getElementById("ddManualManufacturer").value || null;
+				
+				// Enable all manufacturers
+				[].forEach.call(document.querySelectorAll('#ddManualManufacturer option'), function(elm){
+					elm.disabled = false;
+				});
+				
+				if (gunTypeDesc) {
+					// Set the gun type input.
+					document.getElementById("inputGunType").value = gunTypeVal;
+					document.getElementById("inputGunType").onchange();
+					
+					// Disable any manufacturers not in the gun type's manufacturer's list.
+					[].forEach.call(document.querySelectorAll('#ddManualManufacturer option'), function(elm){
+						elm.disabled = elm.value && !gunTypeManufacturers.some(x => x == elm.value);
+					});
+					
+					// Reset the manufacturer if it's not in the list.
+					if (manufacturerVal && !gunTypeManufacturers.some(x => x == manufacturerVal)) {
+						document.getElementById("ddManualManufacturer").value = null;
+					}
+				}
+				
+				// Enable all gun types				
+				[].forEach.call(document.querySelectorAll('#ddManualGunType option'), function(elm){
+					elm.disabled = false;
+				});
+				
+				if (manufacturerVal) {
+					// Set the manufacturer input.
+					if (gunTypeDesc) {
+						let manufacturerNum = Object.keys(gunTypeDesc.manufacturerTypes)
+							.map(id => gunTypeDesc.manufacturerTypes[id] == manufacturerVal ? id : null)
+							.filter(id => id)
+							[0];
+						document.getElementById("inputManufacturer").value = manufacturerNum;
+						document.getElementById("inputManufacturer").onchange();
+					}
+					
+					// Get the list of invalid gun types.
+					let invalidGunTypes = Object.keys(GUN_TYPE_DESCRIPTIONS)
+						.map(type => !Object.values(GUN_TYPE_DESCRIPTIONS[type].manufacturerTypes).some(gt => gt == manufacturerVal) ? 
+							Object.keys(GUN_TYPES).map(key => GUN_TYPES[key] == type ? key : null).filter(t => t)[0] :
+							null
+						)
+						.filter(x => x);
+				
+					// Disable any gun types not related to the selected manufacturer.
+					[].forEach.call(document.querySelectorAll('#ddManualGunType option'), function(elm){
+						let isDisabled = invalidGunTypes.some(x => elm.value && x == elm.value);
+						elm.disabled = isDisabled;
+					});
+					
+					// Reset the gun type if it's not in the list.
+					if (gunTypeVal && invalidGunTypes.some(x => x == gunTypeVal)) {
+						document.getElementById("ddManualGunType").value = null;
+					}
+				}
+				
+				let elementVal = document.getElementById("ddManualElement").value || null;
+				if (elementVal) {
+					document.getElementById("ddManualIsElemental").value = "1";
+					document.getElementById("inputElement").value = elementVal;
+					document.getElementById("inputElement").onchange();
+				}
+				
+				let isElementalVal = document.getElementById("ddManualIsElemental").value || null;
+				let isElementDisabled = (isElementalVal == "0");
+				[].forEach.call(document.querySelectorAll('#ddManualElement option'), function(elm){
+					elm.disabled = isElementDisabled;
+				});
+				document.getElementById("inputIsElemental").value = isElementalVal;
+				document.getElementById("inputIsElemental").onchange();
+				if (isElementDisabled) {
+					if (document.getElementById("ddManualElement").value) {
+						document.getElementById("ddManualElement").value = null;
+					}
+					if (document.getElementById("inputElement").value) {
+						document.getElementById("inputElement").value = null;
+					}
+				}
+				document.getElementById("inputElement").onchange();
+				
+				let qualityVal = document.getElementById("ddManualQuality").value || null;
+				
+				// If Quality is less than Rare, then don't allow Red Text.
+				[].forEach.call(document.querySelectorAll('#ddManualIsRedText option[value="1"]'), function(elm){
+					elm.disabled = qualityVal && qualityVal < "7";
+				});
+				
+				if (qualityVal) {
+					document.getElementById("inputQuality").value = qualityVal;
+					document.getElementById("inputQuality").onchange();
+				}
+				
+				let isRedText = document.getElementById("ddManualIsRedText").value || null;
+					
+				// If it's red text, then it has to be Rare or better.
+				[].forEach.call(document.querySelectorAll('#ddManualQuality option[value="1"],#ddManualQuality option[value="6"]'), function(elm){
+					elm.disabled = isRedText;
+				});
+				
+				if (isRedText) {
+					document.getElementById("inputIsRedText").value = isRedText;
+					document.getElementById("inputIsRedText").onchange();
+					
+					if (document.getElementById("inputQuality").value < "7") {
+						document.getElementById("inputQuality").value = null;
+					}
+				}
+			}
+		</script>
+	</head>
+	<body>
+		<div style="margin: 20px 0; font-size: 24px; font-weight: bold;">
+			No Rest for the Wicked (Borderlands RPG) Item Generator
+		</div>
+		<table>
+			<tr>
+				<td>Gun Type</td>
+				<td>Roll d6:</td> <!-- Gun Type -->
+				<td>
+					<select id="ddManualGunType" class="dd-manual" onchange="updateManualDropdowns()">
+						<option value=""></option>
+						<option value="1">Pistol</option>
+						<option value="2">Combat Rifle</option>
+						<option value="3">Shotgun</option>
+						<option value="4">SMG</option>
+						<option value="5">Sniper Rifle</option>
+						<option value="6">Rocket Launcher</option>
+					</select>
+				</td>
+				<td><input id="inputGunType" type="number" maxlength="1" onchange="inputChange('lblGunType', 'inputGunType', GUN_TYPES, GUN_TYPE_DESCRIPTIONS, 'GunType')" /></td>
+				<td><label id="lblGunType"></label></td>
+			</tr>
+			<tr>
+				<td>Quality</td>
+				<td>Roll d12:</td> <!-- Quality -->
+				<td>
+					<select id="ddManualQuality" class="dd-manual" onchange="updateManualDropdowns()">
+						<option value=""></option>
+						<option value="1">Common</option>
+						<option value="6">Uncommon</option>
+						<option value="9">Rare</option>
+						<option value="10">Legendary</option>
+						<option value="11">Unique</option>
+						<option value="12">E-Tech</option>
+					</select>
+				</td>
+				<td><input id="inputQuality" type="number" maxlength="2" onchange="inputChange('lblQuality', 'inputQuality', QUALITY_TYPES, QUALITY_DESCRIPTIONS, 'Quality')" /></td>
+				<td><label id="lblQuality"></label></td>
+			</tr>
+			<tr>
+				<td>Manufacturer</td>
+				<td>Roll d10 (d8 for pistol):</td> <!-- Manufacturer -->
+				<td>
+					<select id="ddManualManufacturer" class="dd-manual" onchange="updateManualDropdowns()">
+						<option value=""></option>
+						<option value="Bandit">Bandit</option>
+						<option value="Dahl">Dahl</option>
+						<option value="Hyperion">Hyperion</option>
+						<option value="Jakobs">Jakobs</option>
+						<option value="Maliwan">Maliwan</option>
+						<option value="Tediore">Tediore</option>
+						<option value="TORGUE">TORGUE</option>
+						<option value="Vladov">Vladov</option>
+					</select>
+				</td>
+				<td><input id="inputManufacturer" type="number" maxlength="2" onchange="inputChange('lblManufacturer', 'inputManufacturer', getSelectedManufacturerArray(), MANUFACTURER_DESCRIPTIONS, 'Manufacturer')" /></td>
+				<td><label id="lblManufacturer"></label></td>
+			</tr>
+			<tr>
+				<td>Is Elemental</td>
+				<td>Pick a number (1 - 8) and roll d8 (Maliwan is auto-elemental):</td> <!-- Is Elemental -->
+				<td>
+					<select id="ddManualIsElemental" class="dd-manual" onchange="this.value == '0' ? document.getElementById('ddManualElement').value = null : null; updateManualDropdowns()">
+						<option value=""></option>
+						<option value="0">No</option>
+						<option value="1">Yes</option>
+					</select>
+				</td>
+				<td><input id="inputIsElemental" type="number" maxlength="1" onchange="inputChange('lblIsElemental', 'inputIsElemental', {'1':'Yes','0':'No'}, null, 'IsElemental')" /></td>
+				<td><label id="lblIsElemental"></label></td>
+			</tr>
+			<tr>
+				<td>Element</td>
+				<td>Roll d10:</td> <!-- Element -->
+				<td>
+					<select id="ddManualElement" class="dd-manual" onchange="updateManualDropdowns()">
+						<option value=""></option>
+						<option value="1">burn</option>
+						<option value="3">corrode</option>
+						<option value="5">shock</option>
+						<option value="7">slag</option>
+						<option value="9">explosive</option>
+					</select>
+				</td>
+				<td><input id="inputElement" type="number" maxlength="2" onchange="inputChange('lblElement', 'inputElement', (selection.IsElemental == 'Yes' ? ELEMENT_TYPES : {}), ELEMENT_DESCRIPTIONS, 'Element')" /></td>
+				<td><label id="lblElement"></label></td>
+			</tr>
+			<tr>
+				<td>Is Red Text</td>
+				<td>Pick a number (1 - 10) and roll d8 (Unique is auto-red-text):</td> <!-- Is Red Text -->
+				<td>
+					<select id="ddManualIsRedText" class="dd-manual" onchange="updateManualDropdowns()">
+						<option value=""></option>
+						<option value="0">No</option>
+						<option value="1">Yes</option>
+					</select>
+				</td>
+				<td><input id="inputIsRedText" type="number" maxlength="1" onchange="inputChange('lblIsRedText', 'inputIsRedText', {'1':'Yes','0':'No'}, {'Yes': { 'desc': ['+red-text'] }}, 'IsRedText')" /></td>
+				<td><label id="lblIsRedText"></label></td>
+			</tr>
+		</table>
+		
+		<div style="margin-top:10px;">
+			<button id="btnAutoRoll" onclick="autoRoll()">Auto-Roll</button>
+			<button id="btnGenerate" onclick="generate()">Generate</button>
+			<button id="btnGenerate" onclick="reset()">Reset</button>
+		</div>
+		<div id="divDescription" style="margin:20px;">
+		</div>
+	</body>
+</html>
