@@ -996,7 +996,7 @@
 					
 				if (redTexts != null && redTexts.length > 0) {
 					let iRedText = Math.floor(Math.random() * redTexts.length);
-					iRedText = 1;
+					//iRedText = 1;
 					
 					// Add the red text name.
 					selection.RedText = redTexts[iRedText].Text;
@@ -1191,7 +1191,12 @@
 				
 				// If Quality is less than Rare, then don't allow Red Text.
 				[].forEach.call(document.querySelectorAll('#ddManualIsRedText option[value="1"]'), function(elm){
-					elm.disabled = qualityVal && qualityVal < "7";
+					elm.disabled = qualityVal && qualityVal < 7;
+				});
+				
+				// If Quality is equal to Unique, then force red text.
+				[].forEach.call(document.querySelectorAll('#ddManualIsRedText option[value="0"]'), function(elm){
+					elm.disabled = qualityVal && qualityVal == 11;
 				});
 				
 				if (qualityVal) {
@@ -1306,7 +1311,7 @@
 			</tr>
 			<tr>
 				<td>Is Red Text</td>
-				<td>Pick a number (1 - 10) and roll d8 (Unique is auto-red-text):</td> <!-- Is Red Text -->
+				<td>Pick a number (1 - 10) and roll d10 (Unique is auto-red-text):</td> <!-- Is Red Text -->
 				<td>
 					<select id="ddManualIsRedText" class="dd-manual" onchange="updateManualDropdowns()">
 						<option value=""></option>
